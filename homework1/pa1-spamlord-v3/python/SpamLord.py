@@ -31,6 +31,13 @@ mail_regex_4 = [
     'email: (\w+) at ((?:\w+ )*\w+) (edu)'
 ]
 
+phone_regex = [
+    # ashisg + and others
+    '(?:(?:Phone|Fax):)? ?\((\d+)\) ?(\d+)-(\d+)',
+    # cheriton
+    '(?:[pP]h\. )?(\d{3})[- ](\d{3})[- ](\d+)'
+]
+
 """ 
 TODO
 This function takes in a filename along with the file object (actually
@@ -54,8 +61,13 @@ though StringIO should support most everything.
 """
 def process_file(name, f):
 
-    res = mail(name, f)
-    return res
+    mailAddresses = mail(name, f)
+    f.seek(0);
+    phoneNumbers  = phone(name, f)
+
+    mailAddresses.extend(phoneNumbers)
+
+    return mailAddresses
 
 def mail(name, f):
 
@@ -66,7 +78,6 @@ def mail(name, f):
         for regex in mail_regex:
             matches = (re.findall(regex, line))
             for m in matches:
-                print "hager: " + m[0] + "-" + m[1] + "-" + m[2]
                 email = '%s@%s.%s' % m
                 email = email.replace(";", ".")
                 email = email.replace(" dot ", ".")
@@ -100,6 +111,21 @@ def mail(name, f):
                 res.append((name,'e',email))
     return res
 
+def phone(name, f):
+
+    res = []
+    matches = []
+
+    for line in f:
+        for regex in phone_regex:
+            matches = (re.findall(regex, line))
+            for m in matches:
+                phone = '%s-%s-%s' % m
+
+                print "found: " + phone
+                res.append((name,'p',phone))
+
+    return res
 
 """
 You should not need to edit this function, nor should you alter
